@@ -13,7 +13,7 @@ public class Token {
     
     public int ln;
     public String classpart;
-    public char[] valuePart;
+    public String valuePart;
 
     public int getLn() {
         return ln;
@@ -31,13 +31,26 @@ public class Token {
         this.classpart = classpart;
     }
 
-    public char[] getValuePart() {
+    public String getValuePart() {
         return valuePart;
     }
 
-    public void setValuePart(char[] valuePart) {
+    public void setValuePart(String valuePart) {
         this.valuePart = valuePart;
     }
+
+    public Token(int ln, String classpart, String valuePart) {
+        this.ln = ln;
+        this.classpart = classpart;
+        this.valuePart = valuePart;
+    }
+
+    @Override
+    public String toString() {
+        return classpart+ " " + valuePart + " " + ln; //To change body of generated methods, choose Tools | Templates.
+    }
+     
+    
     
     
     
