@@ -13,7 +13,7 @@ public class Token {
     
     public int ln;
     public String classpart;
-    public String valuePart;
+    public char[] valuePart;
 
     public int getLn() {
         return ln;
@@ -31,15 +31,15 @@ public class Token {
         this.classpart = classpart;
     }
 
-    public String getValuePart() {
+    public char[] getValuePart() {
         return valuePart;
     }
 
-    public void setValuePart(String valuePart) {
+    public void setValuePart(char[] valuePart) {
         this.valuePart = valuePart;
     }
 
-    public Token(int ln, String classpart, String valuePart) {
+    public Token(int ln, String classpart, char[] valuePart) {
         this.ln = ln;
         this.classpart = classpart;
         this.valuePart = valuePart;

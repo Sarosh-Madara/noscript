@@ -5,6 +5,7 @@
  */
 package noscript;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.*;
 import modal.Token;
@@ -20,74 +21,120 @@ public class NoScript {
      */
     
     static ArrayList<Token> tokens = new ArrayList();
-    static String input = "float a = 0;";
+    static String input = "int a=10;";
+   
     static String[] classParts = {"DT",".","ID","ASSIGN_OP","CONST",";"};
     static String[] DTs = {"int","float","char","string"};
-    static String[] Ops = {"=",">=","<="};
+    static String[] Ops = {">=","<=","=="};
     static String[] Const = {"INT_CONST","FLOAT_CONST","STRING_CONST","CHAR_CONST"};
+    static char[] Br = {'=',' ',';','.'};
+    static int counter = 0;
     
     
-    static ArrayList<String> ops = new ArrayList<>();
-    static int tokenStart = 0,tokenEnd = 0;
+//    static ArrayList<String> ops = new ArrayList<>();
+    static int ts = 0,te = 0;
     
 //    my approach
     public static void main(String[] args){
-        
-        ops.add("=");
-        ops.add(">=");
-        ops.add("<=");
+//        ops.add("=");
+//        ops.add(">=");
+//        ops.add("<=");
         
         
         
         int ln = 1;
         
+        String CP;
+        char[] VP = new char[100];
+        char[] newVP = new char[100];
         
-        
-            
         for(int i = 0; i< input.length(); i++){
-            if(input.charAt(i) == '.' || input.charAt(i) == ' ' || input.charAt(i) == ';'){
-                String VP = input.substring(tokenStart, tokenEnd);
-                System.out.println("Token: " + VP + "  Starts@: "+tokenStart + "   Ends@: " +  (tokenEnd-1) );
+            CP = null;
+            
+            
+            
+            if(check4Br(input.charAt(i))){
                 
-                
-                String CP = null;
 //                CP = check4DT(VP);
+//                char[] newVP = refinedVP(VP,ts,te);
                 
                 
-                if((CP = check4DT(VP))  != null){
+                System.out.println("Token: " + refinedVP(VP, ts, te) + "  Starts@: "+ts + "   Ends@: " +  (te-1) );
+                
+                
+                // check for DTs
+                if((CP = check4DT(refinedVP(VP, ts, te)))  != null){
                     
-                    tokens.add(new Token(ln, CP, VP));
+                    tokens.add(new Token(ln, CP, newVP));
+                    ts = i+1;
                     
-                    tokenStart = i+1;
-                    tokenEnd = 0;
+                    te = 0;
                     
                     System.err.println("checking 4 DT");
-                }else if( (CP = check4Ops(VP)) != null){
-                    tokens.add(new Token(ln, CP, VP));
-                    tokenStart = i+1;
-                    tokenEnd = 0;
-                    System.err.println("checking 4 Operators");
-                }else if( "a".equalsIgnoreCase(VP)){
-                    CP = "ID";
-                    tokens.add(new Token(ln, CP, VP));
-                    tokenStart = i+1;
-                    tokenEnd = 0;
-                    System.err.println("checking 4 ID");
-                }else if(check4Const(VP) != null && input.charAt(i)==';'){
-                    tokens.add(new Token(ln, CP, VP));
-                    tokenStart = i+1;
-                    tokenEnd = 0;
-                    System.err.println("checking 4 Const");
-                }else{
-                    tokenStart = i;
-                    tokenEnd = 0;
                 }
+//                else if( (CP = check4Ops(newVP)) != null){
+//                    tokens.add(new Token(ln, CP, VP));
+//                    ts = i+1;
+//                    te = 0;
+//                    System.err.println("checking 4 Operators");
+//                }
+//                else if(input.charAt(i) == newVP[0]){
+//                    CP = "ID";
+//                    tokens.add(new Token(ln, CP, ewVP));
+//                    ts = i+1;
+//                    te = 0;
+//                    System.err.println("checking 4 ID");
+//                }
+                // when equal comes as a breaker
+                else if(input.charAt(i) == '='){
+                // firstly check if successive is =
+                    if( i+1 < input.length()-1 && input.charAt(i+1) == '=' ){
+                        
+//                        VP[te] = input.charAt(i);
+
+                        newVP[te] = input.charAt(i);
+                        te++;
+                        VP = new char[100]; // whenever breaker comes there should be new Array for VP
+                        
+                    }else if(input.charAt(i) == '=' && input.charAt(i-1) == '=' ){
+                        check4ReslOp();
+                        te = 0;
+                    }else if(input.charAt(i) == ' '){
+                        
+                    }
                     
+//                    tokens.add(new Token(ln, CP, newVP));
+//                    ts = i+1;
+//                    te = 0;
+//                    System.err.println("checking 4 Const");
+                    
+                }
+                else if(newVP[0] == ';'){
+                    tokens.add(new Token(ln, "STATE_TER", newVP));
+                }
+                else if(newVP[0] == ' '){
+                    ts = i + 1;
+                    te = 0;
+                }
+//                else{
+//                    ts = i;
+//                    te = 0;
+//                }
+                else if(IS_ID(newVP)){
+                    
+                }else if(IS_INT_CONST(newVP)){
+                    
+                }else if(IS_FLOAT_CONST(newVP)){
+                    
+                }else if(IS_CHAR_CONST(newVP)){
+                    
+                }
                 
                 
                 
             }else{
-                tokenEnd++;
+                VP[te] = input.charAt(i);
+                te++;
             }
         }
         
@@ -96,44 +143,17 @@ public class NoScript {
         System.out.println(tokens);
         
     }
-    
-//    public static void main(String[] args) {
-//        String[] keywords = {"int","float","char","string","double","long"};
-//        
-//        String streamReader = "public static void main(){ \n int a = 1; \n }",
-//                longString = " DereK DS BS Banas CA AK 123456 PA (421)555-1212 johnsmith saroshmadara@gmail.com 421 555-1234 ",
-//                strangeStr = "1Z aaa **** *** {{{ {{ { "
-//                ;
-//                
-//        
-////        regexChecker("[A-Za-z0-9._%-]+@[A-Za-z0-9._-]+\\.[A-Za-z]{2,4}", longString);
-////        regexChecker("([0-9]( |-)?)?(\\(?[0-9]{3}\\)?|[0-9]{3})( |-)?[0-9]{4}|[a-zA-Z0-9]{7})", longString);
-//        regexChecker("([0-9]( |-)?)?(\\(?[0-9]{3}\\)?|[0-9]{3})( |-)?[0-9]{3}( |-)?[0-9]{4}|[a-zA-Z0-9]{7}", longString);
-//       
-//    }
-    
-//    public static void regexChecker(String theRegex, String str2Check){
-//        Pattern checkRegex = Pattern.compile(theRegex);
-//        Matcher regexMatcher = checkRegex.matcher(str2Check);
-//        while(regexMatcher.find()){
-//            if(regexMatcher.group().length() != 0){
-//                System.out.println(regexMatcher.group().trim());
-//            }
-//            
-//            System.err.println("Start Index: " + regexMatcher.start());
-//            System.out.println("End Index: " + regexMatcher.end());
-//        }
-//    }
 
-    private static String check4DT(String VP) {
+    private static String check4DT(char[] VP) {
         for (String DT : DTs) {
-            if(DT.equalsIgnoreCase(VP))
+            char[] temp = DT.toCharArray();
+            if(Arrays.equals(temp, VP))
                 return "DT";
         }
         return null;
     }
     
-    private static String check4Ops(String VP){
+    private static String check4RelOp(char[] VP){
         for(String Op: Ops)
             if(Op.equalsIgnoreCase(VP)){
                 return Op;
@@ -143,8 +163,45 @@ public class NoScript {
     
     
     private static String check4Const(String VP){
-        return "INT_CONST";
+        if(VP.matches("^-?[0-9]+(\\.[0-9]+)?$"))
+            return "INT_CONST";
+        else
+            return null;
     }
     
+    private static boolean check4Br(char c){
+        for(int i = 0; i<Br.length; i++){
+            if(Br[i] == c){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static char[] refinedVP(char[] VP, int ts, int te) {
+        char[] temp = new char[te];
+        System.arraycopy(VP, 0, temp, 0, VP.length);
+        return temp;
+    }
+    
+    public static boolean isInteger(String str) {
+        return str.matches("^-?[0-9]+(\\.[0-9]+)?$");
+    }
+
+    private static boolean IS_ID(char[] newVP) {
+        return true;
+    }
+
+    private static boolean IS_INT_CONST(char[] newVP) {
+        return true;
+    }
+
+    private static boolean IS_FLOAT_CONST(char[] newVP) {
+        return true;
+    }
+
+    private static boolean IS_CHAR_CONST(char[] newVP) {
+        return true;
+    }
     
 }
