@@ -32,6 +32,9 @@ public class NoScript {
     
 //    my approach
     public static void main(String[] args){
+        System.out.println("Enter NoScript Code here:\n");
+        Scanner scan = new Scanner(System.in);
+        input = scan.nextLine();
         
         ops.add("=");
         ops.add(">=");
@@ -156,7 +159,7 @@ public class NoScript {
     }
     
     private static boolean check4ID(String str){
-        return str.matches("[A-Za-z]{3}");
+        return str.matches("[A-Za-z]{1}|[A-Za-z]{3}|[A-Za-z]{2}");
     }
     
 }
