@@ -23,19 +23,18 @@ public class Relational_Ops {
     
     public static String checkDoubleOp(String str){
         switch(str){
-            case "<=":
-                return "SM_TH_E_T";
-            case "==":
-                return "COMPARES";
-            case ">=":
-                return "GR_TH_E_T";
-            case "!=":
-                return "NOT_E_T";
             case "[<, =]":
                 return "SM_TH_E_T";
+            case "[=, =]":
+                return "COMPARES";
+            case "[>, =]":
+                return "GR_TH_E_T";
+            case "[!, =]":
+                return "NOT_E_T";
             default:
                 return null;
         }
     }
+    
 
 }

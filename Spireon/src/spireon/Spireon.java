@@ -6,6 +6,7 @@
 package spireon;
 
 import Operators.Arithmatic_Ops;
+import Operators.INC_DEC_Ops;
 import Operators.Relational_Ops;
 import java.awt.Toolkit;
 import java.util.ArrayList;
@@ -28,15 +29,16 @@ public class Spireon extends javax.swing.JFrame {
     static String[] classParts = {"DT",".","ID","ASSIGN_OP","CONST",";"};
     static String[] DTs = {"num","deci","char","str","bool"};
     static String[] Ops = {"=",">=","<=","=="};
-    static String[] keywords = {"new","static","scene","break","case","void","public","private","try","catch","finally","return","import","switch","interface","now","round","do_round","class"};
+    static String[] keywords = {"default","new","static","scene","break","case","void","public","private","try","catch","finally","return","import","jump","interface","now","round","do_round","class"};
     static String[] Const = {"INT_CONST","FLOAT_CONST","STRING_CONST","CHAR_CONST"};
-    static char[] breakers = {' ', '=', '.', '\n', '(', ')', '{', '}', ';', ',', '\'', '\"', '[', ']','+','-','*','/','>','<','-'};
+    static char[] breakers = {' ', '=', '.', '\n', '(', ')', '{', '}', ';', ',', '\'', '\"', '[', ']','+','-','*','/','>','<','-',':'};
     static String VP;
     static char current,next;
     static char[] doubleOps = {'+','-','*','/','=','>','<','!'};
     
     static int ts = 0,te = 0, ln = 1;
-    private static boolean equFlagSet = false;
+    private static boolean equFlagSet = false,INC_DEC_FLAG= false,CONDITIONAL_OP=false;
+    
     
     
     
@@ -165,12 +167,12 @@ public class Spireon extends javax.swing.JFrame {
             if(check4Br(input.charAt(i))){
                 if( current == '\n' && ts > 0 ){
                     VP = input.substring(ts-1,i);
-                }else if(!equFlagSet){
+                }else if(!equFlagSet && !INC_DEC_FLAG){
                     VP = input.substring(ts, i);
                 }else{
-                    
                     VP=input.substring(ts,i);
                 }
+                VP  = VP.trim();
                 
                 String CP;
                 
@@ -202,16 +204,24 @@ public class Spireon extends javax.swing.JFrame {
                     te = 0;
                     String br = null;
                 }
-                else if(check4CharConst(VP)){
-                    
+                // 4 char constant
+                else if(current=='\'' && check4CharConst(VP+current)){ 
+                    tokens.add(new Token(ln, "CHAR_CONST", (VP+current+"").toCharArray()));
+                    VP = "";
                 }
-                
+                else if(check4StrConst(VP)){
+                    tokens.add(new Token(ln, "STR_CONST", (VP).toCharArray()));
+                }
                 else if(check4ID(VP)){
                     CP = "ID";
                     tokens.add(new Token(ln, CP, VP.toCharArray()));
                     ts = i+1;
                     te = 0;
                 }
+                
+                
+                
+                // REST OF THE TERMINATORS & OPERATORS
                 if(check4Terminator(input.charAt(i)) != null){
                        tokens.add(new Token(ln, check4Terminator(input.charAt(i)), new char[]{input.charAt(i)}));
 //                       ts++;
@@ -227,16 +237,7 @@ public class Spireon extends javax.swing.JFrame {
                     VP = String.valueOf(current);
                 }else if(!equFlagSet){
                     String t1;
-                    if(( t1= Arithmatic_Ops.ADDSUB.check(input.charAt(i)))!=null){
-                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
-                        te = 0;
-                        ts = i+1;
-                    }
-                    if((t1=Arithmatic_Ops.MULDIV.check(input.charAt(i))) != null){
-                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
-                        te = 0;
-                        ts = i+1;
-                    }
+                   
                     if((t1 = Relational_Ops.checkSingleOp(input.charAt(i))) != null){
                         tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
                         te = 0;
@@ -251,14 +252,56 @@ public class Spireon extends javax.swing.JFrame {
                 }
                 else if(input.charAt(i) == '=' && checkIfSingle(input.charAt(i-1))){
                      
-                    tokens.add(new Token(1,Relational_Ops.checkDoubleOp(VP) , new char[]{input.charAt(i-1),input.charAt(i)}));
+                    tokens.add(new Token(ln,Relational_Ops.checkDoubleOp(VP) , new char[]{input.charAt(i-1),input.charAt(i)}));
                     equFlagSet = false;
                     ts = i+1;
                 }
                
                
                
+               if((current == '+' || current=='-') && i+1<input.length() && next == current && !INC_DEC_FLAG){
+                    INC_DEC_FLAG = true;
+                    VP = String.valueOf(current);
+                }else if(!INC_DEC_FLAG){
+                    String t1;
+                    if(( t1= Arithmatic_Ops.ADDSUB.check(input.charAt(i)))!=null){
+                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
+                        te = 0;
+                        ts = i+1;
+                    }
+                    if((t1=Arithmatic_Ops.MULDIV.check(input.charAt(i))) != null){
+                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
+                        te = 0;
+                        ts = i+1;
+                    }
+                }
+                else if((current == '+' || current=='-') && input.charAt(i-1) == current){
+                    tokens.add(new Token(ln,INC_DEC_Ops.check("["+input.charAt(i-1)+", "+current+"]") , new char[]{input.charAt(i-1),input.charAt(i)}));
+                    INC_DEC_FLAG = false;
+                    ts = i+1;
+                }
                
+               if((current == '&' || current=='|') && i+1<input.length() && next == current && !CONDITIONAL_OP){
+                    CONDITIONAL_OP = true;
+                    VP = String.valueOf(current);
+                }else if(!INC_DEC_FLAG){
+                    String t1;
+                    if(( t1= Arithmatic_Ops.ADDSUB.check(input.charAt(i)))!=null){
+                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
+                        te = 0;
+                        ts = i+1;
+                    }
+                    if((t1=Arithmatic_Ops.MULDIV.check(input.charAt(i))) != null){
+                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
+                        te = 0;
+                        ts = i+1;
+                    }
+                }
+                else if((current == '+' || current=='-') && input.charAt(i-1) == current){
+                    tokens.add(new Token(ln,INC_DEC_Ops.check("["+input.charAt(i-1)+", "+current+"]") , new char[]{input.charAt(i-1),input.charAt(i)}));
+                    CONDITIONAL_OP = false;
+                    ts = i+1;
+                }
                
                
                
@@ -352,8 +395,8 @@ public class Spireon extends javax.swing.JFrame {
     }
     
     private static boolean check4ID(String str){
-//        return str.matches("[A-Za-z]{1,}");
-        return str.matches("[^A-Za-z|(_(/w*)[A-Za-z0-9]){2,}]{1,}");
+        return str.matches("[A-Za-z]{1,}");
+//        return str.matches("[^A-Za-z|(_(/w*)[A-Za-z0-9]){2,}]{1,}");
 //        return str.matches("^[A-Za-z]_((/w*)[A-Za-z0-9])*$");
     }
 
@@ -418,6 +461,8 @@ public class Spireon extends javax.swing.JFrame {
                 return "SCENE";
             case "void":
                 return "VOID";
+            case "default":
+                return "DEFAULT";
             case "public":
                 return "ACCESS_MODIFIER";
             case "private":
@@ -430,8 +475,8 @@ public class Spireon extends javax.swing.JFrame {
                 return "CATCH";
             case "finally":
                 return "FINALLY";
-            case "switch":
-                return "SWITCH";
+            case "jump":
+                return "JUMP";
             case "import":
                 return "IMPORT";
             case "interface":
@@ -459,6 +504,11 @@ public class Spireon extends javax.swing.JFrame {
     }
 
     private boolean check4CharConst(String VP) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return VP.matches("\\'(\\s|[A-Za-z0-9])\\'");
     }
+
+    private boolean check4StrConst(String VP) {
+        return VP.matches("\"(\\s*|[A-Za-z0-9])*\"");
+    }
+    
 }
