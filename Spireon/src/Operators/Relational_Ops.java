@@ -35,6 +35,8 @@ public class Relational_Ops {
                 return null;
         }
     }
-    
+    public static void main(String args[]){
+        System.out.println("---a".matches("---.+"));
+    }
 
 }

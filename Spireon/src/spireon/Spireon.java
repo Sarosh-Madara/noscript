@@ -7,6 +7,7 @@ package spireon;
 
 import Operators.Arithmatic_Ops;
 import Operators.INC_DEC_Ops;
+import Operators.Logical_Ops;
 import Operators.Relational_Ops;
 import java.awt.Toolkit;
 import java.util.ArrayList;
@@ -35,11 +36,11 @@ public class Spireon extends javax.swing.JFrame {
     static String VP;
     static char current,next;
     static char[] doubleOps = {'+','-','*','/','=','>','<','!'};
-    
-    static int ts = 0,te = 0, ln = 1;
+    static String t;
+    static int ts = 0,te = 0, ln = 1, chToIgnore;
     private static boolean equFlagSet = false,INC_DEC_FLAG= false,CONDITIONAL_OP=false;
-    
-    
+    static int totalLines,i ;
+    private static boolean veryLastComment=false;
     
     
     public Spireon() {
@@ -153,29 +154,56 @@ public class Spireon extends javax.swing.JFrame {
         tokens = new ArrayList<>();
         te = 0; 
         ts = 0;
+        chToIgnore = 0;
         output.setText(null);
         input = source.getText();
         
         
     
             
-        for(int i = 0; i< input.length(); i++){
+        for(i = 0; i< input.length(); i++){
             current = input.charAt(i);
             if(i+1 < input.length()-1){
                 next = input.charAt(i+1);
             }
-            if(check4Br(input.charAt(i))){
-                if( current == '\n' && ts > 0 ){
+            // when comments found
+            if(current=='-' && next==current & input.charAt(i+2)=='-'){
+                   int counter = 0;
+                   chToIgnore = i+3;
+                   while(counter++ < input.length() && chToIgnore < input.length() && input.charAt(chToIgnore) != '\n'){
+                       
+                       chToIgnore++;
+                   }
+                   
+//                   System.out.println("counter part: "+counter+"  chToIgnore: " + chToIgnore);
+                   i = chToIgnore;
+                   veryLastComment=true;
+            }
+            else if(check4Br(input.charAt(i)) || i==input.length()-1){
+                
+                if(i==input.length()-1 && !check4Br(input.charAt(i))){
+                    VP = input.substring(ts,i+1);
+                }else if( current == '\n' && ts > 0 ){
                     VP = input.substring(ts-1,i);
                 }else if(!equFlagSet && !INC_DEC_FLAG){
                     VP = input.substring(ts, i);
-                }else{
+                }
+                else{
                     VP=input.substring(ts,i);
+                }
+                
+                if(veryLastComment){
+                    if(input.charAt(chToIgnore) == '\n'){
+                        VP = input.substring(chToIgnore,i);
+                        ln++;
+                    }else {
+                        VP = input.substring(chToIgnore-1,i);
+                    }
+                    veryLastComment = false;
                 }
                 VP  = VP.trim();
                 
                 String CP;
-                
                 
                 
                 if(check4Keyword(VP) != null){
@@ -252,7 +280,7 @@ public class Spireon extends javax.swing.JFrame {
                 }
                 else if(input.charAt(i) == '=' && checkIfSingle(input.charAt(i-1))){
                      
-                    tokens.add(new Token(ln,Relational_Ops.checkDoubleOp(VP) , new char[]{input.charAt(i-1),input.charAt(i)}));
+                    tokens.add(new Token(ln,Relational_Ops.checkDoubleOp("["+input.charAt(i-1)+", "+current+"]") , new char[]{input.charAt(i-1),input.charAt(i)}));
                     equFlagSet = false;
                     ts = i+1;
                 }
@@ -281,27 +309,28 @@ public class Spireon extends javax.swing.JFrame {
                     ts = i+1;
                 }
                
-               if((current == '&' || current=='|') && i+1<input.length() && next == current && !CONDITIONAL_OP){
-                    CONDITIONAL_OP = true;
-                    VP = String.valueOf(current);
-                }else if(!INC_DEC_FLAG){
-                    String t1;
-                    if(( t1= Arithmatic_Ops.ADDSUB.check(input.charAt(i)))!=null){
-                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
-                        te = 0;
-                        ts = i+1;
-                    }
-                    if((t1=Arithmatic_Ops.MULDIV.check(input.charAt(i))) != null){
-                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
-                        te = 0;
-                        ts = i+1;
-                    }
-                }
-                else if((current == '+' || current=='-') && input.charAt(i-1) == current){
-                    tokens.add(new Token(ln,INC_DEC_Ops.check("["+input.charAt(i-1)+", "+current+"]") , new char[]{input.charAt(i-1),input.charAt(i)}));
-                    CONDITIONAL_OP = false;
-                    ts = i+1;
-                }
+//               if((current == '&' || current=='|') && i+1<input.length() && next == current && !CONDITIONAL_OP){
+//                    CONDITIONAL_OP = true;
+//                    t=String.valueOf(current);
+//                    VP = String.valueOf(current);
+//                }else if(!CONDITIONAL_OP){
+//                    String t1;
+//                    if(( t1= Logical_Ops.check(input.charAt(i)))!=null){
+//                        tokens.add(new Token(ln,t1,new char[]{input.charAt(i)}));
+//                        te = 0;
+//                        ts = i+1;
+//                    }
+//                }
+//                else if((current == '&' || current=='|') && input.charAt(i-1) == current){
+//                    tokens.add(new Token(ln,Logical_Ops.check(current) , new char[]{input.charAt(i-1),input.charAt(i)}));
+//                    CONDITIONAL_OP = false;
+//                    ts = i+1;
+//                }
+               
+               
+               
+               
+               
                
                
                
@@ -395,7 +424,7 @@ public class Spireon extends javax.swing.JFrame {
     }
     
     private static boolean check4ID(String str){
-        return str.matches("[A-Za-z]{1,}");
+        return str.matches("[A-Za-z]{1,}.*");
 //        return str.matches("[^A-Za-z|(_(/w*)[A-Za-z0-9]){2,}]{1,}");
 //        return str.matches("^[A-Za-z]_((/w*)[A-Za-z0-9])*$");
     }
@@ -489,6 +518,8 @@ public class Spireon extends javax.swing.JFrame {
                 return "DO_ROUND";
             case "if":
                 return "IF";
+            case "else":
+                    return "ELSE";
             case "static":
                 return "STATIC";
             default:
